@@ -3,7 +3,7 @@ name: Create Tag and Release on Version Change
 on:
   push:
     paths:
-      - usr/lib/enigma2/python/Plugins/Extensions/RadioM/__init__.py
+      - version.txt
     branches:
       - main
   workflow_dispatch:
@@ -20,11 +20,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Read version from file
+      - name: Read version from version.txt
         id: get_version
         run: |
-          VERSION=$(grep -oP '(?<=__version__ = ")[^"]+' usr/lib/enigma2/python/Plugins/Extensions/RadioM/__init__.py)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          if [ -f version.txt ]; then
+            VERSION=$(cat version.txt | tr -d '\n\r')
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "version=1.0" >> $GITHUB_OUTPUT
+          fi
 
       - name: Check if tag already exists
         id: check_tag
@@ -57,7 +61,6 @@ jobs:
             CHANGELOG=$(git log "$LAST_TAG"..HEAD --pretty=format:"- %s (%h)" --no-merges -n 10)
           fi
 
-          # Escape only % to avoid GitHub Actions output issues
           CHANGELOG="${CHANGELOG//'%'/'%25'}"
 
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
