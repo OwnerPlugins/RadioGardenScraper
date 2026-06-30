@@ -12,7 +12,7 @@ S = requests.Session()
 S.headers.update({
     "User-Agent": "Mozilla/5.0",
     "Referer": "https://radio.garden/"
-}
+})
 
 # ------------------------------------------------------------
 # Clean text: remove control characters
