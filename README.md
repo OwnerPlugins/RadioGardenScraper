@@ -17,7 +17,8 @@
 
 <div align="center">
 
-A high‑performance Python scraper for **Radio Garden** that extracts worldwide radio streams, metadata, and language information with parallel processing and automatic backup.
+A high‑performance Python scraper for **Radio Garden** that extracts worldwide radio streams,
+metadata, and language information with parallel processing and automatic backup.
 
 <br>
 
@@ -126,6 +127,13 @@ You can adjust the following constants at the top of the script:
 - The script respects Radio Garden’s rate limits by using reasonable timeouts and parallelisation.
 - **No video/audio content is stored** – only metadata and stream URLs.
 - The backup file (`radio_garden_backup.json`) can be used to resume from a partial run (manual merge required).
+
+---
+
+## 🔄 Automated Scraping
+
+This repository includes a GitHub Actions workflow that automatically scrapes Radio Garden every day and uploads the latest `radio_garden.json` as an artifact.
+You can also trigger it manually from the **Actions** tab.
 
 ---
 
