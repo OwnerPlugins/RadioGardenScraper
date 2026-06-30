@@ -12,7 +12,7 @@ S = requests.Session()
 S.headers.update({
     "User-Agent": "Mozilla/5.0",
     "Referer": "https://radio.garden/"
-})
+}
 
 # ------------------------------------------------------------
 # Clean text: remove control characters
@@ -430,12 +430,11 @@ def process_place(place):
                 continue
             cid = url.rsplit("/", 1)[-1]
 
-            # 1) Try to get the stream from the page (if it's a valid URL)
+            # Try to get the stream from the page (if it's a valid URL)
             stream = pg.get("stream")
             # If it's not a valid URL (no http), or None, resolve it
             if not stream or not stream.startswith(("http://", "https://")):
                 stream = resolve_stream(cid)
-            # If still None, keep whatever we had (but it might be incomplete)
 
             # Language
             lang_data = pg.get("languages") or pg.get("language")
@@ -461,7 +460,7 @@ def process_place(place):
 # ============================================================
 # MAIN
 # ============================================================
-print("📥 loading places...")
+print("📥 Loading places...")
 pdata = get_json(BASE + "/places")
 places = pdata["data"]["list"]
 total_places = len(places)
@@ -504,10 +503,62 @@ with ThreadPoolExecutor(max_workers=50) as ex:
                 json.dump(all_radios, bf, ensure_ascii=False, indent=2)
             last_backup_count = total_radios_found
 
-# Final save
-with open(OUT, "w", encoding="utf-8") as f:
-    json.dump(all_radios, f, ensure_ascii=False, indent=2)
+# ============================================================
+# INCREMENTAL MERGE: add, update, remove
+# ============================================================
+print("\n🔄 Performing incremental merge...")
 
-print(f"\n✅ DONE! Total radios: {len(all_radios)} out of {total_places} places processed.")
-print(f"Final file: {OUT}")
-print(f"Backup file: {BACKUP_OUT}")
+# 1. Load existing file (if present)
+old_radios = []
+if os.path.exists(OUT):
+    try:
+        with open(OUT, "r", encoding="utf-8") as f:
+            old_radios = json.load(f)
+        print(f"📂 Loaded {len(old_radios)} existing radios from {OUT}")
+    except:
+        print("⚠️ Could not read existing file, starting from scratch")
+        old_radios = []
+else:
+    print("📂 No existing file found, creating new one")
+
+# 2. Create nanoid dictionaries
+old_by_id = {r["nanoid"]: r for r in old_radios}
+new_by_id = {r["nanoid"]: r for r in all_radios}
+
+# 3. Statistics
+added = 0
+updated = 0
+removed = 0
+
+# 4. Build final list
+merged = []
+
+# Iterate over new data
+for nanoid, new_radio in new_by_id.items():
+    if nanoid in old_by_id:
+        # Already exists → update with new data (replace)
+        merged.append(new_radio)
+        updated += 1
+    else:
+        # New → add
+        merged.append(new_radio)
+        added += 1
+
+# Check if any old radio was removed
+for nanoid in old_by_id:
+    if nanoid not in new_by_id:
+        removed += 1
+
+# 5. Show report
+print(f"\n📊 Merge summary:")
+print(f"   ✅ Added:   {added}")
+print(f"   🔄 Updated: {updated}")
+print(f"   ❌ Removed: {removed}")
+print(f"   📦 Total:   {len(merged)} radios")
+
+# 6. Save final file
+with open(OUT, "w", encoding="utf-8") as f:
+    json.dump(merged, f, ensure_ascii=False, indent=2)
+
+print(f"\n✅ DONE! Final file saved: {OUT}")
+print(f"📁 Backup file: {BACKUP_OUT}")
