@@ -1,4 +1,4 @@
-name: Create Tag and Release on Version Change
+name: Auto Tag & Release
 
 on:
   push:
@@ -14,8 +14,9 @@ permissions:
 jobs:
   tag_and_release:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -74,7 +75,16 @@ jobs:
           tag_name: v${{ steps.get_version.outputs.version }}
           name: Release v${{ steps.get_version.outputs.version }}
           body: |
-            ## Changes in this release
+            ## 🎵 RadioGarden Scraper - Release v${{ steps.get_version.outputs.version }}
+
+            ### 📦 What's included
+            - Updated `radio_garden.json` with latest streams
+            - Full dataset of worldwide radio stations
+
+            ### 🔄 Changes in this release
             ${{ steps.changelog.outputs.changelog }}
+
+            ### 📁 Download
+            Download the JSON data from the artifacts section in the Actions tab.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
